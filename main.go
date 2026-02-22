@@ -9,20 +9,26 @@ import (
 )
 
 type Header struct {
-	Alg string
-	Typ string
+	Alg string `json:"alg"`
+	Typ string `json:"typ"`
+}
+
+type Claims struct {
+	Sub string `json:"sub,omitempty"` // Subject - userID
+	Iss string `json:"iss,omitempty"` // Issuer - auth-service
+	Aud string `json:"aud,omitempty"` // Aud - audience payments-service
+	Exp int64  `json:"exp,omitempty"` // Experition
+	Iat int64  `json:"iat,omitempty"` // Issued At
+	Nbf int64  `json:"nbf,omitempty"` // Not Before
 }
 
 type JWT struct {
-	Header Header
-	Claims map[string]string
+	Secret string
 }
 
-func (jwt *JWT) Sign(claims map[string]string, secret string) string {
-	h := Header{"HS256", "JWT"}
-
+func (jwt *JWT) Sign(claims Claims) string {
 	// convert header to json
-	headerJSON, _ := json.Marshal(h)
+	headerJSON, _ := json.Marshal(Header{"HS256", "JWT"})
 
 	// convert claims to json
 	claimsJSON, _ := json.Marshal(claims)
@@ -36,7 +42,7 @@ func (jwt *JWT) Sign(claims map[string]string, secret string) string {
 	completeString := fmt.Sprintf("%s.%s", headerEncoded, claimsEncoded)
 
 	// sign the base64 string
-	mac := hmac.New(sha256.New, []byte(secret))
+	mac := hmac.New(sha256.New, []byte(jwt.Secret))
 	mac.Write([]byte(completeString))
 
 	signature := mac.Sum(nil)
@@ -48,9 +54,12 @@ func (jwt *JWT) Sign(claims map[string]string, secret string) string {
 }
 
 func main() {
-	j := JWT{}
+	claims := Claims{
+		Sub: "user-1222",
+	}
 
-	jwt := j.Sign(map[string]string{"sub": "user-id"}, "secret-here")
+	j := JWT{"secret"}
+	jwt := j.Sign(claims)
 
 	fmt.Println(jwt)
 }
