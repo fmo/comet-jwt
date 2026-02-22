@@ -50,7 +50,7 @@ func (jwt *JWT) Sign(claims map[string]string, secret string) string {
 func main() {
 	j := JWT{}
 
-	jwt := j.Sign(map[string]string{"sub": "mustafa"}, "hello")
+	jwt := j.Sign(map[string]string{"sub": "user-id"}, "secret-here")
 
 	fmt.Println(jwt)
 }
