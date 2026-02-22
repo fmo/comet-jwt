@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 )
 
 type Header struct {
@@ -53,13 +55,45 @@ func (jwt *JWT) Sign(claims Claims) string {
 	return fmt.Sprintf("%s.%s.%s", headerEncoded, claimsEncoded, signatureEncoded)
 }
 
+func (jwt *JWT) Verify(token string) {
+	tokenArr := strings.Split(token, ".")
+	if len(tokenArr) != 3 {
+		return
+	}
+
+	_, err := base64.RawURLEncoding.DecodeString(tokenArr[0])
+	if err != nil {
+		return
+	}
+
+	claims, err := base64.RawURLEncoding.DecodeString(tokenArr[1])
+	if err != nil {
+		return
+	}
+
+	_, err = base64.RawURLEncoding.DecodeString(tokenArr[2])
+	if err != nil {
+		return
+	}
+
+	cls := Claims{}
+
+	json.Unmarshal(claims, &cls)
+
+	fmt.Println(cls)
+
+}
+
 func main() {
 	claims := Claims{
 		Sub: "user-1222",
+		Exp: time.Now().Add(2 * time.Minute).Unix(),
 	}
 
 	j := JWT{"secret"}
 	jwt := j.Sign(claims)
 
 	fmt.Println(jwt)
+
+	j.Verify(jwt)
 }
