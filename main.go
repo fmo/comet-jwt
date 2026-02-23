@@ -55,33 +55,34 @@ func (jwt *JWT) Sign(claims Claims) string {
 	return fmt.Sprintf("%s.%s.%s", headerEncoded, claimsEncoded, signatureEncoded)
 }
 
-func (jwt *JWT) Verify(token string) {
+func (jwt *JWT) Verify(token string) bool {
 	tokenArr := strings.Split(token, ".")
 	if len(tokenArr) != 3 {
-		return
+		return false
 	}
 
 	_, err := base64.RawURLEncoding.DecodeString(tokenArr[0])
 	if err != nil {
-		return
+		return false
 	}
 
-	claims, err := base64.RawURLEncoding.DecodeString(tokenArr[1])
+	decodedClaims, err := base64.RawURLEncoding.DecodeString(tokenArr[1])
 	if err != nil {
-		return
+		return false
 	}
 
 	_, err = base64.RawURLEncoding.DecodeString(tokenArr[2])
 	if err != nil {
-		return
+		return false
 	}
 
-	cls := Claims{}
+	claims := Claims{}
 
-	json.Unmarshal(claims, &cls)
+	json.Unmarshal(decodedClaims, &claims)
 
-	fmt.Println(cls)
+	exp := time.Unix(claims.Exp, 0)
 
+	return !time.Now().After(exp)
 }
 
 func main() {
@@ -92,8 +93,6 @@ func main() {
 
 	j := JWT{"secret"}
 	jwt := j.Sign(claims)
-
-	fmt.Println(jwt)
 
 	j.Verify(jwt)
 }
